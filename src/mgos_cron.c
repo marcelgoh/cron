@@ -24,6 +24,7 @@
 #include "common/cs_dbg.h"
 #include "common/queue.h"
 #include "common/str_util.h"
+#include "common/cs_time.h"
 
 #include "mgos_cron.h"
 #include "mgos_event.h"
@@ -33,8 +34,8 @@
 #include "mgos_timers.h"
 #include "mgos_utils.h"
 
-#include "frozen.h"
-#include "mongoose.h"
+#include "frozen/frozen.h"
+//#include "mongoose.h"
 
 /* Max offset to be used with @sunrise and @sunset : 12 hours */
 #define MAX_SUNRISE_OFFSET_SEC (12 * 60 * 60)
