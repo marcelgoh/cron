@@ -170,19 +170,21 @@ static char *s_cron_test_timegm2str(time_t date) {
 
 static void s_cron_test_expr_order_cb(void *user_data, mgos_cron_id_t id) {
   struct test_entry *te = (struct test_entry *) user_data;
-  time_t expected = s_cron_test_str2timeloc(te->expected[0]);
+  time_t current_time = te->current;
+  time_t expected0 = s_cron_test_str2timeloc(te->expected[0]);
+  time_t expected1 = s_cron_test_str2timeloc(te->expected[1]);
+  time_t expected2 = s_cron_test_str2timeloc(te->expected[2]);
 
-  printf(
-      "expr = \"%s\"\n"
-      "current = %lu (%s)\n"
-      "expe[0] = %lu (%s)",
-      te->expr, te->current, s_cron_test_timeloc2str(te->current), expected,
-      s_cron_test_timeloc2str(expected));
+  printf("expr = \"%s\"\n", te->expr);
+  printf("current = %lu (%s)\n", current_time, s_cron_test_timeloc2str(current_time));
+  printf("expe[0] = %lu (%s)\n", expected0, s_cron_test_timeloc2str(expected0));
+  printf("expe[1] = %lu (%s)\n", expected1, s_cron_test_timeloc2str(expected1));
+  printf("expe[2] = %lu (%s)", expected2, s_cron_test_timeloc2str(expected2));
 
-  if (te->current == expected && s_sorted_te[s_current_id++].id == te->id) {
+  if (te->current == expected0 && s_sorted_te[s_current_id++].id == te->id) {
     te->count++;
   } else {
-    printf("      <---- FAIL");
+    printf("      <---- FAIL (difference: %ld)", te->current - expected0);
   }
   mgos_cron_remove(id);
   printf("\n--------------------------------------------------\n");
@@ -201,6 +203,7 @@ static int s_cmp(const void *p1, const void *p2) {
   }
   return ret;
 }
+
 
 static const char *s_cron_test_expr_order(void) {
   int sz = ARRAY_SIZE(s_te), i;
@@ -243,12 +246,9 @@ static void s_cron_test_shedule_cb(void *user_data, mgos_cron_id_t id) {
   int count = te->count;
   time_t expected = s_cron_test_str2timeloc(te->expected[count]);
 
-  printf(
-      "expr = \"%s\"\n"
-      "current = %lu (%s)\n"
-      "expe[%d] = %lu (%s)",
-      te->expr, te->current, s_cron_test_timeloc2str(te->current), count,
-      expected, s_cron_test_timeloc2str(expected));
+  printf("expr = \"%s\"\n", te->expr);
+  printf("current = %lu (%s)\n", te->current, s_cron_test_timeloc2str(te->current));
+  printf("expe[%d] = %lu (%s)", count, expected, s_cron_test_timeloc2str(expected));
 
   if (te->current == expected) {
     te->count++;
