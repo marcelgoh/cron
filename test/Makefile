@@ -9,9 +9,9 @@ SOURCES = ../src/mgos_cron.c ../src/ccronexpr.c ../src/sunriset.c \
 LIBS = -lm
 
 test:
-	gcc --std=c99 -D_POSIX_SOURCE $(CFLAGS) $(INCDIRS) -g3 -m32 $(SOURCES) $(LIBS) -o cron_test
+	gcc --std=c99 -D_POSIX_SOURCE -DCRON_USE_LOCAL_TIME=1 $(CFLAGS) $(INCDIRS) -g3 -m32 $(SOURCES) $(LIBS) -o cron_test
 	./cron_test
 
 test_ndebug:
-	gcc --std=c99 -D_POSIX_SOURCE $(CFLAGS) $(INCDIRS) -DNDEBUG -g3 -m32 $(SOURCES) $(LIBS) -o cron_test
+	gcc --std=c99 -D_POSIX_SOURCE -DCRON_USE_LOCAL_TIME=1 $(CFLAGS) $(INCDIRS) -DNDEBUG -g3 -m32 $(SOURCES) $(LIBS) -o cron_test
 	./cron_test
