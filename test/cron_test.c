@@ -23,6 +23,7 @@
 #include "mgos_cron.h"
 #include "mgos_timers.h"
 #include "mgos_location.h"
+#include "cron_test_helpers.h"
 
 #define FAIL(str, line)                           \
   do {                                            \
@@ -112,85 +113,7 @@ static struct tm s_tm = {0};
 static struct sorted_test_entry *s_sorted_te = NULL;
 static int s_current_id = 0;
 
-static void s_get_timezone(void) {
-  tzset();
-  int t = timezone / 60 / 60;
-  if (t == 0) {
-    strcpy(s_tz, "UTC");
-  } else {
-    bool neg = false;
-    if (t < 0) {
-      neg = true;
-      t *= -1;
-    }
-    sprintf(s_tz, "UTC%c%d", neg ? '+' : '-', t);
-  }
-}
-
-static struct tm *s_cron_test_str2tm(const char *date) {
-  memset(&s_tm, 0, sizeof s_tm);
-
-  sscanf(date, "%04d-%02d-%02d %02d:%02d:%02d", &s_tm.tm_year, &s_tm.tm_mon,
-         &s_tm.tm_mday, &s_tm.tm_hour, &s_tm.tm_min, &s_tm.tm_sec);
-  s_tm.tm_mon -= 1;
-  s_tm.tm_year -= 1900;
-  s_tm.tm_isdst = -1;
-
-  return &s_tm;
-}
-
-static time_t s_cron_test_str2timeloc(const char *date) {
-  return mktime(s_cron_test_str2tm(date));
-}
-
-static time_t s_cron_test_str2timegm(const char *date) {
-  return (time_t) cs_timegm(s_cron_test_str2tm(date));
-}
-
-static char *s_cron_test_tm2str(struct tm *t, const char *gmt) {
-  size_t sz = ARRAY_SIZE(s_str_time);
-  memset(s_str_time, 0, sz);
-  snprintf(s_str_time, sz - 1, "%04d-%02d-%02d %02d:%02d:%02d %s",
-           t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min,
-           t->tm_sec, gmt);
-  return s_str_time;
-}
-
-static char *s_cron_test_timeloc2str(time_t date) {
-  struct tm t;
-  localtime_r(&date, &t);
-  return s_cron_test_tm2str(&t, s_tz);
-}
-
-static char *s_cron_test_timegm2str(time_t date) {
-  struct tm t;
-  gmtime_r(&date, &t);
-  return s_cron_test_tm2str(&t, "UTC");
-}
-
-static void s_cron_test_expr_order_cb(void *user_data, mgos_cron_id_t id) {
-  struct test_entry *te = (struct test_entry *) user_data;
-  time_t current_time = te->current;
-  time_t expected0 = s_cron_test_str2timeloc(te->expected[0]);
-  time_t expected1 = s_cron_test_str2timeloc(te->expected[1]);
-  time_t expected2 = s_cron_test_str2timeloc(te->expected[2]);
-
-  printf("expr = \"%s\"\n", te->expr);
-  printf("current = %lu (%s)\n", current_time, s_cron_test_timeloc2str(current_time));
-  printf("expe[0] = %lu (%s)\n", expected0, s_cron_test_timeloc2str(expected0));
-  printf("expe[1] = %lu (%s)\n", expected1, s_cron_test_timeloc2str(expected1));
-  printf("expe[2] = %lu (%s)", expected2, s_cron_test_timeloc2str(expected2));
-
-  if (te->current == expected0 && s_sorted_te[s_current_id++].id == te->id) {
-    te->count++;
-  } else {
-    printf("      <---- FAIL (difference: %ld)", te->current - expected0);
-  }
-  mgos_cron_remove(id);
-  printf("\n--------------------------------------------------\n");
-}
-
-static int s_cmp(const void *p1, const void *p2) {
+int s_cmp(const void *p1, const void *p2) {
   time_t res = ((struct sorted_test_entry *) p1)->expected -
                ((struct sorted_test_entry *) p2)->expected;
   int ret;
@@ -204,16 +127,37 @@ static int s_cmp(const void *p1, const void *p2) {
   return ret;
 }
 
+static void s_cron_test_expr_order_cb(void *user_data, mgos_cron_id_t id) {
+  struct test_entry *te = (struct test_entry *) user_data;
+  time_t current_time = te->current;
+  time_t expected0 = s_cron_test_str2timeloc(&s_tm, te->expected[0]);
+  time_t expected1 = s_cron_test_str2timeloc(&s_tm, te->expected[1]);
+  time_t expected2 = s_cron_test_str2timeloc(&s_tm, te->expected[2]);
+
+  printf("expr = \"%s\"\n", te->expr);
+  printf("current = %lu (%s)\n", current_time, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), current_time, s_tz));
+  printf("expe[0] = %lu (%s)\n", expected0, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), expected0, s_tz));
+  printf("expe[1] = %lu (%s)\n", expected1, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), expected1, s_tz));
+  printf("expe[2] = %lu (%s)", expected2, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), expected2, s_tz));
+
+  if (te->current == expected0 && s_sorted_te[s_current_id++].id == te->id) {
+    te->count++;
+  } else {
+    printf("      <---- FAIL (difference: %ld)", te->current - expected0);
+  }
+  mgos_cron_remove(id);
+  printf("\n--------------------------------------------------\n");
+}
 
 static const char *s_cron_test_expr_order(void) {
   int sz = ARRAY_SIZE(s_te), i;
-  time_t t = s_cron_test_str2timeloc(TEST_BASE_TIME);
+  time_t t = s_cron_test_str2timeloc(&s_tm, TEST_BASE_TIME);
   mgos_set_time(t);
   time_t ct = (time_t) mg_time();
   printf(
       "\nNOW: %lu (%s)\n"
       "--------------------------------------------------\n",
-      ct, s_cron_test_timeloc2str(ct));
+      ct, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), ct, s_tz));
 
   if ((s_sorted_te = (struct sorted_test_entry *) calloc(
            sz, sizeof(*s_sorted_te))) == NULL) {
@@ -223,7 +167,7 @@ static const char *s_cron_test_expr_order(void) {
     s_te[i].current = 0;
     s_te[i].count = 0;
     s_sorted_te[i].id = s_te[i].id = i;
-    s_sorted_te[i].expected = s_cron_test_str2timeloc(s_te[i].expected[0]);
+    s_sorted_te[i].expected = s_cron_test_str2timeloc(&s_tm, s_te[i].expected[0]);
   }
   qsort(s_sorted_te, sz, sizeof(*s_sorted_te), s_cmp);
 
@@ -244,11 +188,11 @@ static const char *s_cron_test_expr_order(void) {
 static void s_cron_test_shedule_cb(void *user_data, mgos_cron_id_t id) {
   struct test_entry *te = (struct test_entry *) user_data;
   int count = te->count;
-  time_t expected = s_cron_test_str2timeloc(te->expected[count]);
+  time_t expected = s_cron_test_str2timeloc(&s_tm, te->expected[count]);
 
   printf("expr = \"%s\"\n", te->expr);
-  printf("current = %lu (%s)\n", te->current, s_cron_test_timeloc2str(te->current));
-  printf("expe[%d] = %lu (%s)", count, expected, s_cron_test_timeloc2str(expected));
+  printf("current = %lu (%s)\n", te->current, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), te->current, s_tz));
+  printf("expe[%d] = %lu (%s)", count, expected, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), expected, s_tz));
 
   if (te->current == expected) {
     te->count++;
@@ -265,13 +209,13 @@ static void s_cron_test_shedule_cb(void *user_data, mgos_cron_id_t id) {
 
 static const char *s_cron_test_shedule(void) {
   int sz = ARRAY_SIZE(s_te);
-  time_t t = s_cron_test_str2timeloc(TEST_BASE_TIME);
+  time_t t = s_cron_test_str2timeloc(&s_tm, TEST_BASE_TIME);
   mgos_set_time(t);
   time_t ct = (time_t) mg_time();
   printf(
       "\nNOW: %lu (%s)\n"
       "--------------------------------------------------\n",
-      ct, s_cron_test_timeloc2str(ct));
+      ct, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), ct, s_tz));
 
   for (int i = 0; i < sz; i++) {
     s_te[i].current = 0;
@@ -335,7 +279,7 @@ static struct test_entry s_sun_te[] =
 
 static void s_cron_test_sun_cb(void *user_data, mgos_cron_id_t id) {
   struct test_entry *te = (struct test_entry *) user_data;
-  time_t expected = s_cron_test_str2timegm(te->expected[te->count]);
+  time_t expected = s_cron_test_str2timegm(&s_tm, te->expected[te->count]);
 
   /* The expected time is rounded, so we need to round
      the calculated time as well */
@@ -350,8 +294,8 @@ static void s_cron_test_sun_cb(void *user_data, mgos_cron_id_t id) {
       "expr: \"%s\"\n"
       "current: %lu (%s)\n"
       "expe[%d]: %lu (%s)",
-      te->expr, date, s_cron_test_timegm2str(date), te->count, expected,
-      s_cron_test_timegm2str(expected));
+      te->expr, date, s_cron_test_timegm2str(s_str_time, ARRAY_SIZE(s_str_time), date), te->count, expected,
+      s_cron_test_timegm2str(s_str_time, ARRAY_SIZE(s_str_time), expected));
 
   if (date == expected) {
     te->count = 3;
@@ -368,7 +312,7 @@ static const char *s_cron_test_sun(void) {
   int sun_te_sz = ARRAY_SIZE(s_sun_te);
 
   for (j = 0; j < loc_sz; j++) {
-    time_t t = s_cron_test_str2timegm(TEST_BASE_TIME);
+    time_t t = s_cron_test_str2timegm(&s_tm, TEST_BASE_TIME);
     mgos_set_time(t);
 
     location_set(s_loc[j].lat, s_loc[j].lon);
@@ -380,7 +324,7 @@ static const char *s_cron_test_sun(void) {
         "\nNOW: %lu (%s)\n"
         "LAT: %f LON: %f\n"
         "--------------------------------------------------\n",
-        ct, s_cron_test_timegm2str(ct), loc.lat, loc.lon);
+        ct, s_cron_test_timegm2str(s_str_time, ARRAY_SIZE(s_str_time), ct), loc.lat, loc.lon);
 
     for (i = 0; i < sun_te_sz; i++) {
       s_sun_te[i].current = 0;
@@ -406,7 +350,7 @@ static const char *s_run_all_tests(void) {
 }
 
 int main(void) {
-  s_get_timezone();
+  s_get_timezone(timezone, s_tz);
   const char *fail_msg = s_run_all_tests();
   printf("%s, tests run: %d\n", fail_msg ? "FAIL" : "PASS", s_num_tests);
   return fail_msg == NULL ? EXIT_SUCCESS : EXIT_FAILURE;
