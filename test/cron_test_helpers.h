@@ -3,12 +3,11 @@
 #include <string.h>
 
 #include "common/cs_time.h"
-#include "common/platform.h"
 #include "mgos_cron.h"
 #include "mgos_timers.h"
 #include "mgos_location.h"
 
-void s_get_timezone(long timezone, char *s_tz);
+void s_get_timezone(char s_tz[]);
 
 struct tm *s_cron_test_str2tm(struct tm *s_tm, const char *date);
 

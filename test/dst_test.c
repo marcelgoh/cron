@@ -25,14 +25,12 @@
 
 #define TEST_BASE_TIME "2017-08-29 22:00:20"
 
-extern long timezone;
-
 static char s_tz[8] = {0};
 static char s_str_time[32] = {0};
 static struct tm s_tm = {0};
 
 int main(void) {
-  s_get_timezone(timezone, s_tz);
+  s_get_timezone(s_tz);
   printf("%s\n", s_tz);
   size_t sz = ARRAY_SIZE(s_str_time);
   printf("This is a set of tests for Daylight Savings Time.\n");

@@ -7,7 +7,9 @@
 #include "mgos_timers.h"
 #include "mgos_location.h"
 
-void s_get_timezone(long timezone, char s_tz[]) {
+extern long timezone;
+
+void s_get_timezone(char s_tz[]) {
   tzset();
   int t = timezone / 60 / 60;
   if (t == 0) {

@@ -104,8 +104,6 @@ struct sorted_test_entry {
   time_t expected;
 };
 
-extern long timezone;
-
 static char s_tz[8] = {0};
 static int s_num_tests = 0;
 static char s_str_time[32] = {0};
@@ -350,7 +348,7 @@ static const char *s_run_all_tests(void) {
 }
 
 int main(void) {
-  s_get_timezone(timezone, s_tz);
+  s_get_timezone(s_tz);
   const char *fail_msg = s_run_all_tests();
   printf("%s, tests run: %d\n", fail_msg ? "FAIL" : "PASS", s_num_tests);
   return fail_msg == NULL ? EXIT_SUCCESS : EXIT_FAILURE;
