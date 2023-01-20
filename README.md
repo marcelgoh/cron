@@ -17,7 +17,7 @@ mgos_cron_old.c
 mgos_cron_new.h
 ```
 
-The files containing `_old` are taken from the [12 March 2022 version of `mongoose-os-libs/cron`](https://github.com/mongoose-os-libs/cron/tree/039f5a9f17ac67bc98791564b305e7016f99b884) and the files containing `new` are taken from the [29 March 2022 version of the same repository](https://github.com/mongoose-os-libs/cron/tree/8c7f374b12a13365b9481fcc780872d7cdd2fdfc), which is the most recent one as of 20 January 2023.
+The files containing `_old` are taken from the [12 March 2022 version of `mongoose-os-libs/cron`](https://github.com/mongoose-os-libs/cron/tree/039f5a9f17ac67bc98791564b305e7016f99b884) and the files containing `_new` are taken from the [29 March 2022 version of the same repository](https://github.com/mongoose-os-libs/cron/tree/8c7f374b12a13365b9481fcc780872d7cdd2fdfc), which is the most recent one as of 20 January 2023.
 
 ## Running tests
 
@@ -101,7 +101,7 @@ Next invocation time:
         2022-03-13 22:25:29 UTC-6
 ```
 
-But under the semantics of rule 1 above, `dst_new` should now look for times between 2:30 a.m. on 14 March and 3:15 a.m. on 13 March, which is a time interval of negative length! This causes `dst_new` to have a minor existential crisis, and in one iteration I found it to return a date that is incorrect under any reasonable interpretation of the given cron expression:
+But under the semantics of rule 1 above, for `TEST 4` the `dst_new` code should now look for times between 2:30 a.m. on 14 March and 3:15 a.m. on 13 March, which is a time interval of negative length! This causes `dst_new` to have a minor existential crisis, and in one iteration I found it to return a date that is incorrect under any reasonable interpretation of the given cron expression:
 
 ```
 (TEST 4) Cron expression:
@@ -117,4 +117,4 @@ __Note.__ There is no ambiguity in `TEST 5`, since under both interpretations, t
 Based on the tests above, we can strongly suspect that:
 
 1. When given a time window that fully contains the interval of time between 2:00 a.m and 2:59 a.m., `dst_new` works and `dst_old` is faulty during days where there is a forward time change.
-2. When given a time window one endpoint of which is in the range 2:00--2:59, `dst_old` works fine, provided we interpret a cron expression according to rule number 2 in the previous section, and `dst_new` produces what might euphemistically be called unspecified behaviour.
+2. When given a time window one endpoint of which is in the range 2:00--2:59, `dst_old` seems to work fine, provided we interpret a cron expression according to rule number 2 in the previous section, and `dst_new` produces what might euphemistically be called unspecified behaviour.
