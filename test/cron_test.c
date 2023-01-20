@@ -189,7 +189,8 @@ static void s_cron_test_shedule_cb(void *user_data, mgos_cron_id_t id) {
   time_t expected = s_cron_test_str2timeloc(&s_tm, te->expected[count]);
 
   printf("expr = \"%s\"\n", te->expr);
-  printf("current = %lu (%s)\n", te->current, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), te->current, s_tz));
+  printf("current = %lu (%s; ", te->current, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), te->current, "Local Time"));
+  printf("%s)\n", s_cron_test_timegm2str(s_str_time, ARRAY_SIZE(s_str_time), te->current));
   printf("expe[%d] = %lu (%s)", count, expected, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), expected, s_tz));
 
   if (te->current == expected) {

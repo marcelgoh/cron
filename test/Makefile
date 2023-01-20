@@ -16,7 +16,16 @@ test_ndebug:
 	gcc --std=c99 -D_POSIX_SOURCE -DCRON_USE_LOCAL_TIME=1 $(CFLAGS) $(INCDIRS) -DNDEBUG -g3 -m32 $(SOURCES) cron_test.c $(LIBS) -o cron_test
 	./cron_test
 
-dst:
+dst_new:
+	cp ../src/ccronexpr_new.c ../src/ccronexpr.c
+	cp ../src/ccronexpr_new.h ../src/ccronexpr.h
+	cp ../src/mgos_cron_new.c ../src/mgos_cron.c
 	gcc --std=c99 -D_POSIX_SOURCE -DCRON_USE_LOCAL_TIME=1 $(CFLAGS) $(INCDIRS) -g3 -m32 $(SOURCES) dst_test.c $(LIBS) -o dst_test
 	./dst_test
 
+dst_old:
+	cp ../src/ccronexpr_old.c ../src/ccronexpr.c
+	cp ../src/ccronexpr_old.h ../src/ccronexpr.h
+	cp ../src/mgos_cron_old.c ../src/mgos_cron.c
+	gcc --std=c99 -D_POSIX_SOURCE $(CFLAGS) $(INCDIRS) -g3 -m32 $(SOURCES) dst_test.c $(LIBS) -o dst_test
+	./dst_test

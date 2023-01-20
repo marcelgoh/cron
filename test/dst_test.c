@@ -20,25 +20,26 @@
 #include <string.h>
 #include <time.h>
 
+#include "common/cs_time.h"
+#include "mgos_cron.h"
 #include "cron_test_helpers.h"
-#include "common/platform.h"
 
-#define TEST_BASE_TIME "2017-08-29 22:00:20"
-
-static char s_tz[8] = {0};
-static char s_str_time[32] = {0};
-static struct tm s_tm = {0};
+#define TEST_BASE_TIME "2022-03-12 23:30:20"  //a couple of hours before time-change to DST
 
 int main(void) {
+  char s_tz[8] = {0};
+  char s_str_time[32] = {0};
+  struct tm s_tm = {0};
+
+  srand(time(NULL));
   s_get_timezone(s_tz);
-  printf("%s\n", s_tz);
-  size_t sz = ARRAY_SIZE(s_str_time);
-  printf("This is a set of tests for Daylight Savings Time.\n");
   time_t t = s_cron_test_str2timeloc(&s_tm, TEST_BASE_TIME);
+  mgos_set_time(t);
+  time_t ct = (time_t) mg_time();
+
   printf(
       "\nNOW: %lu (%s)\n"
       "--------------------------------------------------\n",
-      t, s_cron_test_timeloc2str(s_str_time, sz, t, s_tz));
+      ct, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), ct, s_tz));
 
-  return 0;
 }

@@ -54,8 +54,14 @@ char *s_cron_test_tm2str(char s_str_time[], size_t sz, struct tm *t, const char 
 
 char *s_cron_test_timeloc2str(char s_str_time[], size_t sz, time_t date, char s_tz[]) {
   struct tm t;
+  struct tm t_gm;
   localtime_r(&date, &t);
-  return s_cron_test_tm2str(s_str_time, sz, &t, s_tz);
+  gmtime_r(&date, &t_gm);
+  time_t offset = mktime(&t) - mktime(&t_gm);
+  if (t.tm_isdst) ++offset;
+  char timezone_str[8];
+  snprintf(timezone_str, 8, "UTC%+ld", offset / 60 / 60);
+  return s_cron_test_tm2str(s_str_time, sz, &t, timezone_str);
 }
 
 char *s_cron_test_timegm2str(char s_str_time[], size_t sz, time_t date) {
