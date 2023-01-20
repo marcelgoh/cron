@@ -1,1 +1,5 @@
 .vscode/*
+./src/ccronexpr.
+./src/ccronexpr.h
+./src/mgos_cron.c
+./test/dst_test

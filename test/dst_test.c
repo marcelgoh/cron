@@ -26,10 +26,27 @@
 
 #define TEST_BASE_TIME "2022-03-12 23:30:20"  //a couple of hours before time-change to DST
 
+void cb(void *user_data, mgos_cron_id_t id) {
+  mgos_cron_remove(id);
+  printf("\n--------------------------------------------------\n");
+}
+
 int main(void) {
   char s_tz[8] = {0};
   char s_str_time[32] = {0};
   struct tm s_tm = {0};
+  char test_expr[256];
+  char *exprs[] = {
+    "@random:{\"from\":\"0 0 0 * * *\", \"to\":\"59 59 23 * * *\", \"number\":1}",
+    "@random:{\"from\":\"0 45 1 * * *\", \"to\":\"0 15 3 * * *\", \"number\":1}",
+    "@random:{\"from\":\"0 59 1 * * *\", \"to\":\"0 1 3 * * *\", \"number\":1}",
+    "@random:{\"from\":\"0 59 1 * * *\", \"to\":\"0 30 2 * * *\", \"number\":1}",
+    "@random:{\"from\":\"0 30 2 * * *\", \"to\":\"0 15 3 * * *\", \"number\":1}",
+    "@random:{\"from\":\"0 15 2 * * *\", \"to\":\"0 45 2 * * *\", \"number\":1}"
+  };
+  int exprs_sz = ARRAY_SIZE(exprs);
+  sprintf(test_expr, "@random:{\"from\":\"0 0 0 * * *\", \"to\":\"59 59 23 * * *\", \"number\":1}");
+  void *user_data;
 
   srand(time(NULL));
   s_get_timezone(s_tz);
@@ -42,4 +59,12 @@ int main(void) {
       "--------------------------------------------------\n",
       ct, s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), ct, s_tz));
 
+  for (int i = 0; i < exprs_sz; ++i) {
+    strcpy(test_expr, exprs[i]);
+    printf("(TEST %d) Cron expression:\n\t%s\n", i, test_expr);
+    mgos_cron_id_t id = mgos_cron_add(test_expr, cb, user_data);
+    time_t ni = mgos_cron_get_next_invocation(id, ct);
+    printf("Next invocation time:\n\t%s\n", s_cron_test_timeloc2str(s_str_time, ARRAY_SIZE(s_str_time), ni, s_tz));
+    printf("--------------------------------------------------\n");
+  }
 }
