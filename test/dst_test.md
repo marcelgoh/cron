@@ -17,7 +17,7 @@ We enter the [`find_next()` function](https://github.com/marcelgoh/cron/blob/f8b
 before add_to_field in find_next: field = 2, cal->tm_hour = 18, cal->tm_mday = 13, cal->tm_isdst = 0
 ```
 
-So we call the [`add_to_field()` function](https://github.com/marcelgoh/cron/blob/f8bb8e63e1e72fc1a67191f7919e71349b90e94b/src/ccronexpr_old.c#L197) with `field == nextField`, the latter of which happens to be `3`, indicating that we should increment the day. This function does its thing, and we see that the `calendar`'s hour is now incremented by one (`13` changed to `14` in `cal->tm_mday` but nothing else changed).
+So we call the [`add_to_field()` function](https://github.com/marcelgoh/cron/blob/f8bb8e63e1e72fc1a67191f7919e71349b90e94b/src/ccronexpr_old.c#L197) with `field == nextField`, the latter of which happens to be `3`, indicating that we should increment the day. This function does its thing, and we see that the `calendar`'s day is now incremented by one (`13` changed to `14` in `cal->tm_mday` but nothing else changed in the struct).
 
 ```
 before cron_mktime in add_to_field: field = 3, cal->tm_hour = 18, cal->tm_mday = 14, cal->tm_isdst = 0
