@@ -1,3 +1,6 @@
+#include <stdarg.h>
+#include <stdio.h>
+
 enum cs_log_level {
   LL_NONE = -1,
   LL_ERROR = 0,
@@ -19,6 +22,13 @@ int cs_log_print_prefix(enum cs_log_level level, const char *func,
 }
 
 void cs_log_printf(const char *fmt, ...) {
-  (void) fmt;
+  va_list args;
+  char buffer[256];
+
+  va_start(args, fmt);
+  vsprintf(buffer, fmt, args);
+  printf("%s\n", buffer);
+  va_end(args);
+
   return;
 }

@@ -30,6 +30,7 @@
 #include <math.h>
 
 #include "ccronexpr.h"
+#include "common/cs_dbg.h"
 
 #define CRON_MAX_SECONDS 60
 #define CRON_MAX_MINUTES 60
@@ -294,7 +295,9 @@ static int add_to_field(struct tm* calendar, int field, int val) {
     default:
         return 1; /* unknown field */
     }
+    if (field == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tbefore cron_mk_time in add_to_field: field = %d, cal->tm_hour = %d, cal->tm_mday = %d, cal->tm_isdst = %d", field, calendar->tm_hour, calendar->tm_mday, calendar->tm_isdst));
     time_t res = cron_mktime(calendar);
+    if (field == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tafter cron_mk_time in add_to_field: field = %d, cal->tm_hour = %d, cal->tm_mday = %d, cal->tm_isdst = %d", field, calendar->tm_hour, calendar->tm_mday, calendar->tm_isdst));
     if (CRON_INVALID_INSTANT == res) {
         return 1;
     }
@@ -400,10 +403,14 @@ static unsigned int find_next(uint8_t* bits, unsigned int max, unsigned int valu
     int err = 0;
     unsigned int next_value = next_set_bit(bits, max, value, &notfound);
     /* roll over if needed */
+    if (nextField == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tstart of find_next: day_of_month = %d, next_value = %u, value = %u, notfound = %d", calendar->tm_mday, next_value, value, notfound));
     if (notfound) {
+        if (nextField == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tbefore add_to_field in find_next: field = %d, cal->tm_hour = %d, cal->tm_mday = %d, cal->tm_isdst = %d", field, calendar->tm_hour, calendar->tm_mday, calendar->tm_isdst));
         err = add_to_field(calendar, nextField, 1);
         if (err) goto return_error;
+        if (nextField == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tafter add_to_field in find_next: field = %d, cal->tm_hour = %d, cal->tm_mday = %d, cal->tm_isdst = %d", field, calendar->tm_hour, calendar->tm_mday, calendar->tm_isdst));
         err = reset_min(calendar, field);
+        if (nextField == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tafter reset_min in find_next: field = %d, cal->tm_hour = %d, cal->tm_mday = %d", field, calendar->tm_hour, calendar->tm_mday));
         if (err) goto return_error;
         notfound = 0;
         next_value = next_set_bit(bits, max, 0, &notfound);
@@ -413,6 +420,7 @@ static unsigned int find_next(uint8_t* bits, unsigned int max, unsigned int valu
         if (err) goto return_error;
         err = reset_all_min(calendar, lower_orders);
         if (err) goto return_error;
+        if (nextField == CRON_CF_DAY_OF_WEEK) LOG(LL_DEBUG, ("\tafter reset_all_min in find_next: field = %d, cal->tm_hour = %d, cal->tm_mday = %d, cal->tm_isdst = %d", field, calendar->tm_hour, calendar->tm_mday, calendar->tm_isdst));
     }
     return next_value;
 
@@ -425,6 +433,7 @@ static unsigned int find_next_day(struct tm* calendar, uint8_t* days_of_month, u
     int err;
     unsigned int count = 0;
     unsigned int max = 366;
+    LOG(LL_DEBUG, ("in find_next_day: cron_get_bit(days_of_month, day_of_month) = %d, day_of_month = %u", (int) cron_get_bit(days_of_month, day_of_month), day_of_month));
     while ((!cron_get_bit(days_of_month, day_of_month) || !cron_get_bit(days_of_week, day_of_week)) && count++ < max) {
         err = add_to_field(calendar, CRON_CF_DAY_OF_MONTH, 1);
 
@@ -484,7 +493,9 @@ static int do_next(cron_expr* expr, struct tm* calendar, unsigned int dot) {
     }
 
     hour = calendar->tm_hour;
+    LOG(LL_DEBUG, ("day_of_month before updating hour: %d", calendar->tm_mday));
     update_hour = find_next(expr->hours, CRON_MAX_HOURS, hour, calendar, CRON_CF_HOUR_OF_DAY, CRON_CF_DAY_OF_WEEK, resets, &res);
+    LOG(LL_DEBUG, ("day_of_month after updating hour: %d", calendar->tm_mday));
     if (0 != res) goto return_result;
     if (hour == update_hour) {
         push_to_fields_arr(resets, CRON_CF_HOUR_OF_DAY);
@@ -990,6 +1001,7 @@ time_t cron_next(cron_expr* expr, time_t date) {
     if (0 != res) return CRON_INVALID_INSTANT;
 
     time_t calculated = cron_mktime(calendar);
+    LOG(LL_DEBUG, ("in cron_next: original = %lu, calculated = %lu, date = %lu\n", original, calculated, date));
     if (CRON_INVALID_INSTANT == calculated) return CRON_INVALID_INSTANT;
     if (calculated == original) {
         /* We arrived at the original timestamp - round up to the next whole second and try again... */

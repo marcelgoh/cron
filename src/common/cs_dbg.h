@@ -16,13 +16,11 @@
  */
 
 #ifndef CS_COMMON_CS_DBG_H_
-#define CS_COMMON_CS_DBG_H_
+#define CS_COMMON_CS_DBG_H_ 1
 
 #include "common/platform.h"
 
-#if CS_ENABLE_STDIO
 #include <stdio.h>
-#endif
 
 #ifndef CS_ENABLE_DEBUG
 #define CS_ENABLE_DEBUG 0
@@ -85,6 +83,8 @@ int cs_log_print_prefix(enum cs_log_level level, const char *fname, int line);
 
 extern enum cs_log_level cs_log_level;
 
+#define CS_ENABLE_STDIO 1
+
 #if CS_ENABLE_STDIO
 
 /*
@@ -110,10 +110,13 @@ void cs_log_printf(const char *fmt, ...) PRINTF_LIKE(1, 2);
  */
 #define LOG(l, x)                                     \
   do {                                                \
+    cs_log_printf x;                                  \
     if (cs_log_print_prefix(l, __FILE__, __LINE__)) { \
       cs_log_printf x;                                \
     }                                                 \
   } while (0)
+
+
 
 #else
 

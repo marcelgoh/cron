@@ -322,7 +322,13 @@ static time_t s_cron_next(struct mgos_cron_entry *ce, time_t date) {
          */
         time_t next_to = cron_next(ce->expr.data.random.to, from);
         time_t diff = next_to - from;
-        LOG(LL_DEBUG, ("Trying to schedule inside of the current window"));
+        //LOG(LL_DEBUG, ("Trying to schedule inside of the current window"));
+        LOG(LL_DEBUG, ("Trying to schedule inside of the current window with:\n"
+           "\tnext_to: %lu\n"
+           "\tdate: %lu\n"
+           "\tfrom: %lu\n"
+           "\tto: %lu",
+           next_to, date, from, to));
 
         ret = s_next_random(to - diff, to, date, ce->expr.data.random.number);
         if (ret != (time_t) -1) {
@@ -333,11 +339,21 @@ static time_t s_cron_next(struct mgos_cron_entry *ce, time_t date) {
            * Failed to get any points in the current time window, so fallback
            * to the next time window (in the future).
            */
-          LOG(LL_DEBUG, ("Nothing scheduled inside of the current window"));
+          //LOG(LL_DEBUG, ("Nothing scheduled inside of the current window"));
+          LOG(LL_DEBUG, ("Nothing scheduled inside of the current window:\n"
+           "\tnext_to: %lu\n"
+           "\tdate: %lu\n"
+           "\tfrom: %lu\n"
+           "\tto: %lu",
+           next_to, date, from, to));
           to = next_to;
         }
       }
-      LOG(LL_DEBUG, ("Scheduling outside of the window"));
+      LOG(LL_DEBUG, ("Scheduling outside of the window:\n"
+       "\tdate: %lu\n"
+       "\tfrom: %lu\n"
+       "\tto: %lu",
+       date, from, to));
 
       ret = s_next_random(from, to, date, ce->expr.data.random.number);
       assert(ret != (time_t) -1);
@@ -408,6 +424,8 @@ clean:
 
 time_t mgos_cron_get_next_invocation(mgos_cron_id_t id, time_t date) {
   if (id == MGOS_INVALID_CRON_ID) return 0;
+  struct mgos_cron_entry *ce = (struct mgos_cron_entry *) id;
+  LOG(LL_DEBUG, ("ce->planned_time = %lu\n", ce->planned_time));
   return s_cron_next((struct mgos_cron_entry *) id, date);
 }
 
@@ -662,6 +680,7 @@ mgos_cron_id_t mgos_cron_add(const char *expr, mgos_cron_callback_t cb,
       (struct mgos_cron_entry *) calloc(1, sizeof(*ce));
   const char *err = NULL;
 
+
   if (ce == NULL) goto clean;
 
   err = s_cron_parse_expr(expr, &ce->expr);
@@ -678,6 +697,8 @@ mgos_cron_id_t mgos_cron_add(const char *expr, mgos_cron_callback_t cb,
   ce->planned_time = mg_time();
   ce->cb = cb;
   ce->user_data = user_data;
+
+  LOG(LL_DEBUG, ("in mgos_cron_add: ce->planned_time = %lu\n", ce->planned_time));
 
   if (!s_cron_schedule_next(ce)) {
     goto clean;

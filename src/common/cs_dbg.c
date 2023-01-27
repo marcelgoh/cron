@@ -24,6 +24,8 @@
 #include "common/cs_time.h"
 #include "common/str_util.h"
 
+#define CS_ENABLE_STDIO 1
+
 enum cs_log_level cs_log_level WEAK =
 #if CS_ENABLE_DEBUG
     LL_VERBOSE_DEBUG;

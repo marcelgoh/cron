@@ -323,7 +323,13 @@ static time_t s_cron_next(struct mgos_cron_entry *ce, time_t date) {
          */
         time_t next_to = cron_next(ce->expr.data.random.to, from);
         time_t diff = next_to - from;
-        LOG(LL_DEBUG, ("Trying to schedule inside of the current window"));
+        //LOG(LL_DEBUG, ("Trying to schedule inside of the current window"));
+        LOG(LL_DEBUG, ("Trying to schedule inside of the current window with:\n"
+           "\tnext_to: %lu\n"
+           "\tdate: %lu\n"
+           "\tfrom: %lu\n"
+           "\tto: %lu",
+           next_to, date, from, to));
 
         ret = s_next_random(to - diff, to, date, ce->expr.data.random.number);
         if (ret != (time_t) -1) {
@@ -338,7 +344,11 @@ static time_t s_cron_next(struct mgos_cron_entry *ce, time_t date) {
           to = next_to;
         }
       }
-      LOG(LL_DEBUG, ("Scheduling outside of the window"));
+      LOG(LL_DEBUG, ("Scheduling outside of the window:\n"
+       "\tdate: %lu\n"
+       "\tfrom: %lu\n"
+       "\tto: %lu",
+       date, from, to));
 
       ret = s_next_random(from, to, date, ce->expr.data.random.number);
       assert(ret != (time_t) -1);
